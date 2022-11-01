@@ -4,9 +4,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-func Init() error {
-	viper.AutomaticEnv()
+func Init() (*Config, error) {
 	viper.AddConfigPath("./config")
 	viper.SetConfigName("config")
-	return viper.ReadInConfig()
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, err
+	}
+
+	config := &Config{}
+	if err := viper.Unmarshal(config); err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }

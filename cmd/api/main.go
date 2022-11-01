@@ -5,7 +5,6 @@ import (
 	"os/signal"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 
 	"github.com/belanenko/api-server/config"
 	"github.com/belanenko/api-server/internal/logger"
@@ -16,16 +15,21 @@ import (
 func main() {
 	logger := logger.NewLogger()
 
-	if err := config.Init(); err != nil {
+	config, err := config.Init()
+	if err != nil {
 		logger.Fatal(err)
 	}
 
-	if viper.GetString("app.environment") == "production" {
+	if config.Environment == "production" {
 		logger.SetProductionFormatter()
 	}
-	if err := logger.SetLogLevel(viper.GetString("log_level")); err != nil {
+	if err := logger.SetLogLevel(config.LogLevel); err != nil {
 		logger.Fatal(err)
 	}
+
+	logrus.WithFields(logrus.Fields{
+		"environment": config.Environment,
+	}).Info()
 
 	app := server.NewApp(
 		logger,
@@ -33,7 +37,7 @@ func main() {
 	)
 
 	go func() {
-		if err := app.Run(viper.GetString("app.port")); err != nil {
+		if err := app.Run(config.App.Port); err != nil {
 			logger.Fatal(err)
 		}
 	}()

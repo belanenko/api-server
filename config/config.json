@@ -1,0 +1,12 @@
+{
+  "environment": "development",
+  "log_level": "debug",
+
+  "app": {
+    "port": 9000
+  },
+
+  "ga" : {
+    "some_creditions": "token_mewmeemmewmemw"
+  }
+}

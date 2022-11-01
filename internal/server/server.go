@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,10 +28,11 @@ func NewApp(logger *logger.Logger, useCase info.UseCase) *App {
 	}
 }
 
-func (a *App) Run(port string) error {
-	if err := a.validatePort(port); err != nil {
-		return fmt.Errorf("port is invalid: %w", err)
+func (a *App) Run(port int) error {
+	if port <= 0 {
+		return fmt.Errorf("invalid port value: %d", port)
 	}
+	listenPort := fmt.Sprintf("%d", port)
 
 	router := gin.Default()
 	api := router.Group("/api")
@@ -40,11 +40,11 @@ func (a *App) Run(port string) error {
 	httpinfo.RegisterHTTPEndpoints(api, a.info)
 
 	a.httpServer = &http.Server{
-		Addr:    ":" + port,
+		Addr:    ":" + listenPort,
 		Handler: router,
 	}
 
-	go a.listen(port)
+	go a.listen(listenPort)
 
 	return nil
 }
@@ -70,21 +70,4 @@ func (a *App) Shutdown() error {
 	defer shutdown()
 
 	return a.httpServer.Shutdown(ctx)
-}
-
-func (a *App) validatePort(port string) error {
-	if port == "" {
-		a.logger.WithFields(logrus.Fields{
-			"port": port,
-		}).Error("port is empty")
-		return fmt.Errorf("port is empty")
-	}
-
-	if _, err := strconv.ParseInt(port, 10, 32); err != nil {
-		a.logger.WithFields(logrus.Fields{
-			"port": port,
-		}).Error("can't convert port to int")
-		return fmt.Errorf("can't convert port to int")
-	}
-	return nil
 }
